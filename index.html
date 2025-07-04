@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,45 +31,66 @@
     button:hover {
       background-color: #388bfd;
     }
+    #status {
+      margin-top: 10px;
+      color: #888;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
   <h1>Zama Secret Mint</h1>
   <p>Claim your encrypted NFT below:</p>
   <button id="connect">Connect Wallet</button>
-  <button id="mint" disabled>Mint NFT</button>  <script>
+  <button id="mint" disabled>Mint NFT</button>
+  <div id="status">Wallet not connected</div>
+
+  <script>
     const connectButton = document.getElementById('connect');
     const mintButton = document.getElementById('mint');
+    const status = document.getElementById('status');
 
     let signer;
     let sdk;
-    const contractAddress = "0xB87D3335399f0AD77139D54ea5CaC6D8747043e5"; // Your contract
-    const chain = "sepolia";
+    const contractAddress = "0xB87D3335399f0AD77139D54ea5CaC6D8747043e5";
 
     connectButton.onclick = async () => {
-      if (!window.ethereum) {
-        alert('Install MetaMask to continue');
-        return;
+      try {
+        if (!window.ethereum) {
+          alert('No wallet found. Please install MetaMask or Rabby.');
+          return;
+        }
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+
+        sdk = new thirdweb.ThirdwebSDK(signer);
+
+        const address = await signer.getAddress();
+        connectButton.innerText = `Connected: ${address.slice(0, 6)}...${address.slice(-4)}`;
+        status.innerText = "Wallet connected ✅";
+        mintButton.disabled = false;
+      } catch (err) {
+        console.error(err);
+        alert('Wallet connection failed.');
+        status.innerText = "Connection failed ❌";
       }
-
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      signer = provider.getSigner();
-      sdk = new thirdweb.ThirdwebSDK(signer);
-
-      connectButton.innerText = 'Wallet Connected';
-      mintButton.disabled = false;
     };
 
     mintButton.onclick = async () => {
       try {
+        status.innerText = "Minting...";
         const contract = await sdk.getContract(contractAddress, "nft-drop");
         const tx = await contract.claim(1);
+        status.innerText = `Minted ✅ Tx: ${tx.receipt.transactionHash}`;
         alert('NFT Minted! Tx Hash: ' + tx.receipt.transactionHash);
       } catch (err) {
         console.error(err);
         alert('Mint failed: ' + err.message);
+        status.innerText = "Mint failed ❌";
       }
     };
-  </script></body>
+  </script>
+</body>
 </html>
