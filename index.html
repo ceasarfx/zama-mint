@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zama Secret Mint</title>
+  <script src="https://cdn.jsdelivr.net/npm/@thirdweb-dev/sdk@3/dist/thirdweb.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      background: #0d1117;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    button {
+      background-color: #1f6feb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin-top: 20px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #388bfd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Zama Secret Mint</h1>
+  <p>Claim your encrypted NFT below:</p>
+  <button id="connect">Connect Wallet</button>
+  <button id="mint" disabled>Mint NFT</button>  <script>
+    const connectButton = document.getElementById('connect');
+    const mintButton = document.getElementById('mint');
+
+    let signer;
+    let sdk;
+    const contractAddress = "0xB87D3335399f0AD77139D54ea5CaC6D8747043e5"; // Your contract
+    const chain = "sepolia";
+
+    connectButton.onclick = async () => {
+      if (!window.ethereum) {
+        alert('Install MetaMask to continue');
+        return;
+      }
+
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      signer = provider.getSigner();
+      sdk = new thirdweb.ThirdwebSDK(signer);
+
+      connectButton.innerText = 'Wallet Connected';
+      mintButton.disabled = false;
+    };
+
+    mintButton.onclick = async () => {
+      try {
+        const contract = await sdk.getContract(contractAddress, "nft-drop");
+        const tx = await contract.claim(1);
+        alert('NFT Minted! Tx Hash: ' + tx.receipt.transactionHash);
+      } catch (err) {
+        console.error(err);
+        alert('Mint failed: ' + err.message);
+      }
+    };
+  </script></body>
+</html>
